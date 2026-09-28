@@ -1,21 +1,16 @@
-function selectionSort(arr) {
-  let startingPosition = 0;
+function selectionSort (arr) {
+  for (let i = 0; i < arr.length - 1; ++i) {
+    let minIndex = i;
 
-  for (let i = 0; i < arr.length; ++i) {
-    let currentMinElementIndex = startingPosition;
-
-    for (let j = i; j < arr.length; ++j) {
-      if (arr[j] < arr[currentMinElementIndex]) {
-        currentMinElementIndex = j;
+    for (let j = i + 1; j < arr.length; ++j) {
+      if (arr[j] < arr[minIndex]) {
+        minIndex = j;
       }
     }
 
-    [arr[startingPosition], arr[currentMinElementIndex]] = [
-      arr[currentMinElementIndex],
-      arr[startingPosition],
-    ];
-
-    ++startingPosition;
+    if (arr[i] > arr[minIndex]) {
+      [arr[i], arr[minIndex]] = [arr[minIndex], arr[i]];
+    }
   }
 
   return arr;
