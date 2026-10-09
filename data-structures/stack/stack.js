@@ -4,6 +4,10 @@ class Stack {
   #top;
 
   constructor(initialCapacity = 16) {
+    if (!Number.isInteger(initialCapacity) || initialCapacity < 0) {
+      throw new Error("Capacity should be a positive integer");
+    }
+
     this.#capacity = initialCapacity;
     this.#arr = new Array(initialCapacity);
     this.#top = 0;
@@ -30,7 +34,10 @@ class Stack {
   }
 
   pop() {
-    if (!this.#top) return "stack is empty";
+    if (!this.#top) {
+      throw new Error("Stack is empty");
+    }
+
     return this.#arr[--this.#top];
   }
 
