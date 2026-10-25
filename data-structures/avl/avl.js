@@ -1,11 +1,11 @@
-class TreeNode {
+class AvlNode {
   #data;
   #left;
   #right;
   #height;
 
-  constructor(data) {
-    this.#data = data;
+  constructor(value) {
+    this.#data = value;
     this.#left = null;
     this.#right = null;
     this.#height = 1;
@@ -15,28 +15,28 @@ class TreeNode {
     return this.#data;
   }
 
-  get left() {
-    return this.#left;
-  }
-
-  get right() {
-    return this.#right;
-  }
-
-  get height() {
-    return this.#height;
-  }
-
   set data(value) {
     this.#data = value;
+  }
+
+  get left() {
+    return this.#left;
   }
 
   set left(value) {
     this.#left = value;
   }
 
+  get right() {
+    return this.#right;
+  }
+
   set right(value) {
     this.#right = value;
+  }
+
+  get height() {
+    return this.#height;
   }
 
   set height(value) {
@@ -51,61 +51,65 @@ class AVL {
     this.#root = null;
   }
 
-  getHeight(node) {
+  _getHeight(node) {
     if (!node) return 0;
     return node.height;
   }
 
-  getBalance(node) {
+  _update(node) {
+    if (!node) return;
+    node.height =
+      1 + Math.max(this._getHeight(node.left), this._getHeight(node.right));
+  }
+
+  _bf(node) {
     if (!node) return 0;
-    return this.getHeight(node.left) - this.getHeight(node.right);
+    return this._getHeight(node.left) - this._getHeight(node.right);
   }
 
-  rightRotation(node) {
-    const x = node;
-    const y = node.left;
-    const T2 = y.right;
-
-    y.right = x;
-    x.left = T2;
-
-    x.height = 1 + Math.max(this.getHeight(x.left), this.getHeight(x.right));
-    y.height = 1 + Math.max(this.getHeight(y.left), this.getHeight(y.right));
-
-    return y;
+  _getMin(node) {
+    if (!node.left) return node;
+    return this._getMin(node.left);
   }
 
-  leftRotation(node) {
-    const x = node;
-    const y = node.right;
+  _rotateRight(y) {
+    const x = y.left;
+    const T2 = x.right;
+
+    x.right = y;
+    y.left = T2;
+
+    this._update(y);
+    this._update(x);
+
+    return x;
+  }
+
+  _rotateLeft(x) {
+    const y = x.right;
     const T2 = y.left;
 
     y.left = x;
     x.right = T2;
 
-    x.height = 1 + Math.max(this.getHeight(x.left), this.getHeight(x.right));
-    y.height = 1 + Math.max(this.getHeight(y.left), this.getHeight(y.right));
+    this._update(x);
+    this._update(y);
 
     return y;
   }
 
-  leftRightRotation(node) {
-    node.left = this.leftRotation(node.left);
-    node = this.rightRotation(node);
-
-    return node;
+  _rotateLeftRight(x) {
+    x.left = this._rotateLeft(x.left);
+    return this._rotateRight(x);
   }
 
-  rightLeftRotation(node) {
-    node.right = this.rightRotation(node.right);
-    node = this.leftRotation(node);
-    return node;
+  _rotateRightLeft(x) {
+    x.right = this._rotateRight(x.right);
+    return this._rotateLeft(x);
   }
 
   _insert(node, value) {
-    if (node === null) {
-      return new TreeNode(value);
-    }
+    if (!node) return new AvlNode(value);
 
     if (value < node.data) {
       node.left = this._insert(node.left, value);
@@ -113,171 +117,146 @@ class AVL {
       node.right = this._insert(node.right, value);
     }
 
-    node.height =
-      1 + Math.max(this.getHeight(node.left), this.getHeight(node.right));
+    this._update(node);
 
-    const balance = this.getBalance(node);
+    const balance = this._bf(node);
 
     if (balance > 1) {
       if (value > node.left.data) {
-        // LR
-        node = this.leftRightRotation(node);
+        node = this._rotateLeftRight(node);
       } else {
-        // LL
-        node = this.rightRotation(node);
+        node = this._rotateRight(node);
       }
     } else if (balance < -1) {
       if (value < node.right.data) {
-        // RL
-        node = this.rightLeftRotation(node);
+        node = this._rotateRightLeft(node);
       } else {
-        // RR
-        node = this.leftRotation(node);
+        node = this._rotateLeft(node);
       }
     }
 
     return node;
   }
 
-  _contains(node, value) {
-    if (node === null) {
-      return false;
-    }
-
-    if (value < node.data) {
-      return this._contains(node.left, value);
-    } else if (value > node.data) {
-      return this._contains(node.right, value);
-    } else if (value === node.data) {
-      return true;
-    }
-
-    return false;
-  }
-
-  _inorder(node, result) {
-    if (!node) return result;
-
-    this._inorder(node.left, result);
-    result.push(node.data);
-    this._inorder(node.right, result);
-  }
-
-  _preOrder(node, result) {
-    if (!node) return result;
-
-    result.push(node.data);
-    this._preOrder(node.left, result);
-    this._preOrder(node.right, result);
-  }
-
-  _postOrder(node, result) {
-    if (!node) return result;
-
-    this._postOrder(node.left, result);
-    this._postOrder(node.right, result);
-    result.push(node.data);
-  }
-
-  _levelOrder(node, level, result) {
-    if (!node) return;
-
-    if (result.length <= level) result.push([]);
-
-    result[level].push(node.data);
-
-    this._levelOrder(node.left, level + 1, result);
-    this._levelOrder(node.right, level + 1, result);
-  }
-
-  calculateHeigh(node) {
-    return 1 + Math.max(this.getHeight(node.left), this.getHeight(node.right));
-  }
-
   _remove(node, value) {
-    if (!node) return node;
+    if (!node) return null;
 
     if (value < node.data) {
       node.left = this._remove(node.left, value);
     } else if (value > node.data) {
       node.right = this._remove(node.right, value);
     } else {
-      if (!node.left && !node.right) return null;
-      if (!node.left || !node.right) {
+      if (!node.left && !node.right) {
+        return null;
+      } else if (!node.left || !node.right) {
         return node.left || node.right;
       }
 
-      const rightPartMin = this.getMin(node.right);
-      const successor = rightPartMin.data;
-
-      node.data = successor;
-      node.right = this._remove(node.right, successor);
+      const successor = this._getMin(node.right);
+      node.data = successor.data;
+      node.right = this._remove(node.right, successor.data);
     }
 
-    node.height = this.calculateHeigh(node);
+    this._update(node);
 
-    const balance = this.getBalance(node);
+    const balance = this._bf(node);
 
     if (balance > 1) {
-      // LL
-    } else if (balance < -1) {
-      // RR
-    }
+      const leftBalance = this._bf(node.left);
 
-    console.log(node);
+      if (leftBalance >= 0) {
+        node = this._rotateRight(node);
+      } else {
+        node = this._rotateLeftRight(node);
+      }
+    } else if (balance < -1) {
+      const rightBalance = this._bf(node.right);
+
+      if (rightBalance <= 0) {
+        node = this._rotateLeft(node);
+      } else {
+        node = this._rotateRightLeft(node);
+      }
+    }
 
     return node;
   }
 
-  getMin(node = this.#root) {
-    if (node.left === null) {
-      return node;
-    }
-
-    return this.getMin(node.left);
-  }
-
-  getMax(node = this.#root) {
-    if (node.right === null) {
-      return node;
-    }
-
-    return this.getMax(node.right);
-  }
-
-  insertRecursive(value) {
+  insert(value) {
     this.#root = this._insert(this.#root, value);
   }
 
-  containsRecursive(value) {
-    return this._contains(this.#root, value);
-  }
-
-  inOrderRecursive() {
-    const result = [];
-    this._inorder(this.#root, result);
-    return result;
-  }
-
-  preOrderRecursive() {
-    const result = [];
-    this._preOrder(this.#root, result);
-    return result;
-  }
-
-  postOrderRecursive() {
-    const result = [];
-    this._postOrder(this.#root, result);
-    return result;
-  }
-
-  levelOrderRecursive() {
-    const result = [];
-    this._levelOrder(this.#root, 0, result);
-    return result.flat();
-  }
-
-  removeRecursive(value) {
+  remove(value) {
     this.#root = this._remove(this.#root, value);
+  }
+
+  inorder() {
+    const result = [];
+
+    function helper(node) {
+      if (!node) return;
+      helper(node.left);
+      result.push(node.data);
+      helper(node.right);
+    }
+
+    helper(this.#root);
+
+    return result;
+  }
+
+  preorder() {
+    const result = [];
+
+    function helper(node) {
+      if (!node) return;
+
+      result.push(node.data);
+      helper(node.left);
+      helper(node.right);
+    }
+
+    helper(this.#root);
+
+    return result;
+  }
+
+  postorder() {
+    const result = [];
+
+    function helper(node) {
+      if (!node) return;
+
+      helper(node.left);
+      helper(node.right);
+      result.push(node.data);
+    }
+
+    helper(this.#root);
+
+    return result;
+  }
+
+  levelorder() {
+    if (!this.#root) return [];
+
+    const result = [];
+    const queue = [this.#root];
+
+    while (queue.length) {
+      const current = queue.shift();
+
+      result.push(current.data);
+
+      if (current.left) {
+        queue.push(current.left);
+      }
+
+      if (current.right) {
+        queue.push(current.right);
+      }
+    }
+
+    return result;
   }
 }
