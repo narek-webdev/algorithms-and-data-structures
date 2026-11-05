@@ -15,217 +15,289 @@ class Node {
     return this.#next;
   }
 
-  set next(value) {
-    this.#next = value;
+  set data(val) {
+    this.#data = val;
   }
 
-  set data(value) {
-    this.#data = value;
+  set next(val) {
+    this.#next = val;
   }
 }
 
 class SList {
-  #size;
   #head;
+  #size;
 
   constructor() {
     this.#head = null;
     this.#size = 0;
   }
 
-  static fromArray(arr) {
-    const list = new SList();
+  get head() {
+    return this.#head;
+  }
 
-    if (!arr.length) return list;
-
-    for (let i = arr.length - 1; i >= 0; --i) {
-      list.push_front(arr[i]);
-    }
-
-    return list;
+  set head(head) {
+    this.#head = head;
   }
 
   get size() {
     return this.#size;
   }
 
+  set size(value) {
+    this.#size = value;
+  }
+
+  static fromArray(arr) {
+    if (!Array.isArray(arr)) return;
+
+    const list = new SList();
+
+    if (!arr.length) return list;
+
+    for (let i = 0; i < arr.length; ++i) {
+      list.push_back(arr[i]);
+    }
+
+    return list;
+  }
+
+  isValidIndex(index) {
+    return Number.isInteger(index) && index >= 0 && index < this.size;
+  }
+
   clear() {
-    this.#head = null;
-    this.#size = 0;
+    this.size = 0;
+    this.head = null;
   }
 
   push_back(elem) {
-    const node = new Node(elem);
-
-    if (!this.#size) {
-      this.#head = node;
-    } else {
-      let lastElem = this.#head;
-
-      while (lastElem.next) {
-        lastElem = lastElem.next;
-      }
-
-      lastElem.next = node;
+    if (this.isEmpty()) {
+      this.head = new Node(elem);
+      ++this.size;
+      return;
     }
 
-    ++this.#size;
+    let current = this.head;
+
+    while (current.next) {
+      current = current.next;
+    }
+
+    current.next = new Node(elem);
+
+    ++this.size;
   }
 
   push_front(elem) {
     const node = new Node(elem);
-
-    if (!this.#size) {
-      this.#head = node;
-    } else {
-      node.next = this.#head;
-      this.#head = node;
-    }
-
-    ++this.#size;
+    node.next = this.head;
+    this.head = node;
+    ++this.size;
   }
 
   pop_back() {
-    if (!this.#size) return;
+    if (this.isEmpty()) return;
 
-    if (!this.#head?.next) {
-      this.#head = null;
+    if (this.size === 1) {
+      this.head = null;
     } else {
-      let current = this.#head;
+      let current = this.head;
 
-      while (current.next?.next) {
+      while (current.next.next) {
         current = current.next;
       }
 
       current.next = null;
     }
 
-    --this.#size;
+    --this.size;
   }
 
   pop_front() {
-    if (!this.#size) return;
-
-    if (!this.#head?.next) {
-      this.#head = null;
-    } else {
-      this.#head = this.#head.next;
-    }
-
-    --this.#size;
+    if (this.isEmpty()) return;
+    this.head = this.head.next;
+    --this.size;
   }
 
   toArray() {
-    if (!this.#size) return [];
+    if (this.isEmpty()) return [];
 
-    let result = [];
-    let current = this.#head;
+    let arr = [];
+    let current = this.head;
 
-    for (let i = 0; i < this.#size; ++i) {
-      result.push(current.data);
+    while (current) {
+      arr.push(current.data);
       current = current.next;
     }
 
-    return result;
+    return arr;
   }
 
   front() {
-    if (!this.#size) return "Not found";
-    return this.#head.data;
+    if (this.isEmpty()) return;
+    return this.head.data;
   }
 
   isEmpty() {
-    return !this.#size;
+    return !this.size;
   }
 
   at(index) {
-    if (!Number.isInteger(index) || index < 0 || index >= this.#size)
-      return "Error";
+    if (!this.isValidIndex(index)) return;
 
-    let counter = 0;
-    let current = this.#head;
+    let current = this.head;
 
-    while (counter !== index) {
+    while (index--) {
       current = current.next;
-      ++counter;
     }
 
     return current.data;
   }
 
-  // Not finished yet
-  insert(index, value) {}
+  insert(index, value) {
+    if (!this.isValidIndex(index)) return;
 
-  erase(index) {
-    if (!Number.isInteger(index)) return "Index must be an integer";
-    if (index < 0) return "Index should be greateer than equal to 0";
-    if (!this.#size) return "This is an empty linked list";
-    if (index >= this.#size) return "Index can't be greateer than the size";
+    let node = new Node(value);
 
-    if (index === 0) {
-      this.#head = this.#head.next;
-    } else {
-      let current = this.#head;
-      let prev = this.#head;
-      let counter = 0;
-
-      while (counter !== index) {
-        prev = current;
-        current = current.next;
-        ++counter;
-      }
-
-      prev.next = prev.next.next;
-    }
-
-    --this.#size;
-  }
-
-  // Not finished yet
-  merge(list) {}
-
-  remove(value) {
-    if (!this.#size) return "Error";
-
-    if (this.#head.data === value) {
-      this.#head = this.#head.next;
-      --this.#size;
+    if (!this.head) {
+      this.head = node;
       return;
     }
 
-    let counter = this.#size;
-    let current = this.#head;
-    let prev = this.#head;
+    if (!index) {
+      let head = this.head;
+      node.next = head;
+      this.head = node;
+    } else {
+      let current = this.head;
+      let prev = null;
 
-    while (counter) {
-      if (current.data !== value) {
+      while (index--) {
         prev = current;
         current = current.next;
-      } else {
-        const index = this.#size - counter;
-        this.erase(index);
-        break;
       }
 
-      --counter;
+      prev.next = node;
+      node.next = current;
+    }
+
+    ++this.size;
+  }
+
+  erase(index) {
+    if (!this.isValidIndex(index)) return;
+    if (!this.head) return;
+    if (!index) return this.pop_front();
+
+    let current = this.head;
+    let prev = null;
+
+    while (index--) {
+      prev = current;
+      current = current.next;
+    }
+
+    prev.next = current.next;
+
+    --this.size;
+  }
+
+  reverse() {
+    if (!this.head) return;
+
+    let current = this.head;
+
+    let size = this.size;
+    let nextCurrent = current.next;
+    let guess = null;
+
+    while (size--) {
+      current.next = guess;
+      guess = current;
+      current = nextCurrent;
+      nextCurrent = current?.next;
+    }
+
+    this.head = guess;
+  }
+
+  remove(value) {
+    if (!this.head) return;
+
+    let current = this.head;
+    let index = 0;
+
+    while (current) {
+      if (current.data === value) {
+        this.erase(index);
+        return;
+      }
+
+      ++index;
+
+      current = current.next;
     }
   }
 
-  // Not finished yet
   sort(cmp) {
-    function mergeSort() {}
-    function merge() {}
+    cmp = typeof cmp === "function" ? cmp : (a, b) => a - b;
+
+    function mergeSort(list) {
+      if (!list || !list.next) return list;
+
+      let slow = list;
+      let fast = list.next;
+
+      while (fast && fast.next) {
+        slow = slow.next;
+        fast = fast.next.next;
+      }
+
+      let mid = slow.next;
+      slow.next = null;
+
+      let left = mergeSort(list);
+      let right = mergeSort(mid);
+
+      return merge(left, right);
+    }
+
+    this.head = mergeSort(this.head);
+
+    function merge(l1, l2) {
+      let dummy = new Node();
+      let current = dummy;
+
+      while (l1 && l2) {
+        if (cmp(l1.data, l2.data) <= 0) {
+          current.next = l1;
+          l1 = l1.next;
+        } else {
+          current.next = l2;
+          l2 = l2.next;
+        }
+
+        current = current.next;
+      }
+
+      current.next = l1 || l2;
+
+      return dummy.next;
+    }
   }
 
   [Symbol.iterator]() {
-    let current = this.#head;
+    let current = this.head;
+    let size = this.size;
 
     return {
       next() {
-        if (current) {
-          const result = { value: current.data, done: false };
+        if (size--) {
+          let value = { value: current.data, done: false };
           current = current.next;
-          return result;
+          return value;
         } else {
           return { value: undefined, done: true };
         }
